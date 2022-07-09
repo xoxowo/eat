@@ -1,13 +1,16 @@
 import json
 import re
 
+
 from unittest     import result
 from django.http  import JsonResponse
+from django.core.exceptions import ObjectDoesNotExist
+
 from django.views import View
 from users.models import StoreUser
 
 class SignUpView(View):
-       def post(self, request):
+    def post(self, request):
         data = json.loads(request.body) 
         email_form = re.compile('^[a-zA-Z0-9+-_.]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$')
         password_form = re.compile('^(?=.*[A-Za-z])(?=.*\d)(?=.*[$@$!%*#?&])[A-Za-z\d$@$!%*#?&]{8,}$')
@@ -36,3 +39,20 @@ class SignUpView(View):
         except KeyError :
             return JsonResponse({"message": "KEY_ERROR"}, status = 400)  
 
+class SignInView(View):
+    def post(self, request):
+        data = json.loads(request.body)
+
+        try: 
+            if not StoreUser.objects.filter(email=data['email']).exists() :
+                return JsonResponse({"message": "INVALID_USER_NOT MATCH"}, status = 401)   
+
+            if StoreUser.objects.filter(email=data['email']):
+   
+                if StoreUser.objects.filter(password = data['password']):
+                    return JsonResponse({"message": "SUCCESS"}, status = 200) 
+                else:
+                    return JsonResponse({"message": "INVALID_USER_password error"}, status = 401) 
+
+        except KeyError :
+            return JsonResponse({"message": "KEY_ERROR"}, status = 400)
